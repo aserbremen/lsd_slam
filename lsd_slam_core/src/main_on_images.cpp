@@ -29,6 +29,7 @@
 #include <dirent.h>
 #include <fstream>
 #include <iostream>
+#include <iomanip>
 #include <sstream>
 
 #include "IOWrapper/ROS/ROSOutput3DWrapper.h"
@@ -198,13 +199,23 @@ int main(int argc, char **argv) {
     }
 
     // get timestamps of conti measurements
-    // std::string timestampFilename = source.substr(source.find_last_of('/')+1) +"times.txt";
-    // fprintf(stderr, "timestampsfile = %s\n", timestampFilename.c_str());
-    // std::ifstream  timestampFile;
-    // timestampFile.open(timestampFilename);
-    // if (! timestampFile.is_open()) {
-    //     fprintf(stderr, "Couldnt open timestamps file: %s\n", timestampFilename.c_str());
-    // }
+    std::string timestampFilename = source.substr(0, source.find_last_of('/')+1) + "times.txt";
+    fprintf(stderr, "timestampsfile = %s\n", timestampFilename.c_str());
+    std::ifstream  timestampFile;
+    timestampFile.open(timestampFilename);
+    if (! timestampFile.is_open()) {
+        fprintf(stderr, "Couldnt open timestamps file: %s\n", timestampFilename.c_str());
+        return -1;
+    }
+    std::vector<int> timestampIDs;
+    std::vector<double> timestamps;
+    int ID;
+    double ts;
+    while(timestampFile >> ID >> ts) {
+        timestampIDs.push_back(ID);
+        timestamps.push_back(ts);
+    }
+    fprintf(stderr, "Found %d timestamps\n", (int)timestamps.size());
 
     std::string outfileDir = outfile.substr(0, outfile.find_last_of('/'));
     std::string mkdirCmd = "mkdir " + outfileDir;
@@ -240,10 +251,11 @@ int main(int argc, char **argv) {
             fprintf(stderr, "output width %d, output height %d", image.size().width, image.size().height);
         }
 
+        double current_timestamp = timestamps[i];
         if (runningIDX == 0)
-            system->randomInit(image.data, fakeTimeStamp, runningIDX);
+            system->randomInit(image.data, current_timestamp, runningIDX);
         else
-            system->trackFrame(image.data, runningIDX, hz == 0, fakeTimeStamp);
+            system->trackFrame(image.data, runningIDX, hz == 0, current_timestamp);
         runningIDX++;
         fakeTimeStamp += 0.0333;
 
@@ -253,7 +265,7 @@ int main(int argc, char **argv) {
         //         pose.translation().z(), pose.unit_quaternion().x(), pose.unit_quaternion().y(), pose.unit_quaternion().z(),
         //         pose.unit_quaternion().w());
         rpgFile.open(outfile, std::ios_base::app);
-        rpgFile << fakeTimeStamp << " " << pose.translation().x() << " " << pose.translation().y() << " " << pose.translation().z() << " "
+        rpgFile << std::fixed << std::setprecision(6) << current_timestamp << std::setprecision(16) << " " << pose.translation().x() << " " << pose.translation().y() << " " << pose.translation().z() << " "
                 << pose.unit_quaternion().x() << " " << pose.unit_quaternion().y() << " " << pose.unit_quaternion().z() << " "
                 << pose.unit_quaternion().w() << std::endl;
         rpgFile.close();
