@@ -88,6 +88,10 @@ set(SOURCE_FILES
   ${PROJECT_SOURCE_DIR}/src/IOWrapper/OpenCV/ImageDisplay_OpenCV.cpp
 )
 
+
+message(WARNING  ${EIGEN3_INCLUDE_DIR})
+set(EIGEN3_INCLUDE_DIR "/home/serov/sw/eigen-3.2.5/build/include/")
+# https://answers.ros.org/question/328647/lsd-slam-double-free-or-corruption/
 include_directories(
   include
   ${EIGEN3_INCLUDE_DIR}
@@ -101,7 +105,8 @@ include_directories(
 
 # build shared library.
 add_library(lsdslam SHARED ${SOURCE_FILES})
-target_link_libraries(lsdslam ${FABMAP_LIB} ${G2O_LIBRARIES} ${catkin_LIBRARIES} csparse cxsparse X11)
+# target_link_libraries(lsdslam ${FABMAP_LIB} ${G2O_LIBRARIES} ${catkin_LIBRARIES} csparse cxsparse X11) csparse not needed!
+target_link_libraries(lsdslam ${FABMAP_LIB} ${G2O_LIBRARIES} ${catkin_LIBRARIES} cxsparse X11)
 #rosbuild_link_boost(lsdslam thread)
 
 
